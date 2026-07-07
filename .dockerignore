@@ -8,5 +8,4 @@ android
 *.md
 screenshot.png
 CLAUDE.md
-Dockerfile
 .dockerignore

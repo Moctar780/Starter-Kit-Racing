@@ -2,8 +2,8 @@
   "name": "starter-kit-racing",
   "version": "1.0.0",
   "description": "A JavaScript/Three.js port of [Kenney's Starter Kit Racing](https://github.com/KenneyNL/Starter-Kit-Racing).",
-  "main": "index.js",
   "scripts": {
+    "start": "serve . --listen tcp://0.0.0.0:${PORT:-8080} --no-port-switching",
     "test": "echo \"Error: no test specified\" && exit 1",
     "android:assemble": "cd android && ./gradlew assembleDebug",
     "android:assemble:release": "cd android && ./gradlew assembleRelease",
@@ -25,6 +25,7 @@
   "dependencies": {
     "blockly": "^13.1.0",
     "crashcat": "^0.0.3",
+    "serve": "^14.2.6",
     "three": "^0.185.1"
   }
 }
