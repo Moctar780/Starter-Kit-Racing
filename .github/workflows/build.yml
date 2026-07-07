@@ -12,6 +12,10 @@ on:
       - main
       - master
 
+env:
+  MINISERVE_VERSION: v0.35.0
+  MINISERVE_URL: https://github.com/svenstaro/miniserve/releases/download/v0.35.0/miniserve-0.35.0-x86_64-pc-windows-msvc.exe
+
 jobs:
   build:
     name: Build (${{ matrix.os }})
@@ -52,21 +56,33 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: |
-          $items = @(
+          $root = Join-Path $PWD 'dist/windows'
+          New-Item -ItemType Directory -Force -Path $root | Out-Null
+
+          $folders = @('js', 'vendor', 'models', 'audio', 'sprites', 'node_modules')
+          foreach ( $folder in $folders ) {
+            Copy-Item -Recurse -Force $folder (Join-Path $root $folder)
+          }
+
+          $files = @(
             'index.html',
             'blockly.html',
             'editor.html',
-            'js',
-            'vendor',
-            'models',
-            'audio',
-            'sprites',
-            'node_modules',
             'package.json',
-            'package-lock.json',
-            'scripts/start-windows.bat'
+            'package-lock.json'
           )
-          Compress-Archive -Path $items -DestinationPath starter-kit-racing-windows.zip -Force
+          foreach ( $file in $files ) {
+            Copy-Item -Force $file (Join-Path $root $file)
+          }
+
+          Invoke-WebRequest -Uri $env:MINISERVE_URL -OutFile (Join-Path $root 'Hakilidia-Racing.exe')
+          Copy-Item -Force 'scripts/start-windows.bat' (Join-Path $root 'start.bat')
+
+          if ( -not (Test-Path (Join-Path $root 'Hakilidia-Racing.exe')) ) {
+            throw 'Hakilidia-Racing.exe was not created.'
+          }
+
+          Compress-Archive -Path (Join-Path $root '*') -DestinationPath starter-kit-racing-windows.zip -Force
 
       - name: Upload Windows package
         if: matrix.os == 'windows-latest'

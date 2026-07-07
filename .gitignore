@@ -35,6 +35,7 @@ desktop.ini
 npm-debug.log*
 .cache/
 dist/
+dist/
 coverage/
 *.tar
 
