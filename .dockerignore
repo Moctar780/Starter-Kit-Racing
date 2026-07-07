@@ -1,0 +1,12 @@
+.git
+.gitignore
+_benchmark
+_godot
+docs
+node_modules
+android
+*.md
+screenshot.png
+CLAUDE.md
+Dockerfile
+.dockerignore

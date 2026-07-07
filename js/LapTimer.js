@@ -49,6 +49,7 @@ export class LapTimer {
 		this.lap = 1;
 		this.bestLap = loadBest( this.storageKey );
 		this.lastLap = null;
+		this.completedLaps = 0;
 		this.currentLapTime = 0;
 		this.running = false;
 
@@ -81,6 +82,23 @@ export class LapTimer {
 			this.buildUI();
 
 		}
+
+	}
+
+	reset() {
+
+		this.lap = 1;
+		this.lastLap = null;
+		this.completedLaps = 0;
+		this.currentLapTime = 0;
+		this.running = false;
+		this.prevForwardProj = null;
+		this.visitedCells.clear();
+
+		if ( this.lapEl ) this.lapEl.textContent = this.lap;
+		if ( this.currentEl ) this.currentEl.textContent = formatTime( null );
+		if ( this.lastEl ) this.lastEl.textContent = formatTime( null );
+		if ( this.bestEl ) this.bestEl.textContent = formatTime( this.bestLap );
 
 	}
 
@@ -167,11 +185,24 @@ export class LapTimer {
 
 	}
 
+	isNearFinish( position ) {
+
+		if ( ! this.enabled ) return false;
+
+		_tmp.copy( position ).sub( this.lineCenter );
+		const forwardProj = Math.abs( _tmp.dot( this.lineForward ) );
+		const lateralProj = Math.abs( _tmp.dot( this.lineRight ) );
+
+		return forwardProj <= this.cellSize * 0.5 && lateralProj <= this.cellSize * 0.5;
+
+	}
+
 	completeLap() {
 
 		const isBest = this.bestLap === null || this.currentLapTime < this.bestLap;
 
 		this.lastLap = this.currentLapTime;
+		this.completedLaps ++;
 		if ( isBest ) {
 
 			this.bestLap = this.currentLapTime;

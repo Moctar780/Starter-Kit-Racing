@@ -24,13 +24,17 @@ export class Controls {
 	setupTouchUI() {
 
 		if ( ! ( 'ontouchstart' in window ) ) return;
+		if ( document.getElementById( 'blockly-panel' ) ) return;
 
 		const css = document.createElement( 'style' );
 		css.textContent = `
 			.touch-controls { position: absolute; inset: 0; pointer-events: none; z-index: 10; }
 			.steer-zone { position: absolute; inset: 0; pointer-events: auto; touch-action: none; }
-			.steer-base { position: absolute; width: 140px; height: 140px; margin: -70px 0 0 -70px; border-radius: 50%; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); display: none; }
-			.steer-knob { position: absolute; top: 50%; left: 50%; width: 60px; height: 60px; margin: -30px 0 0 -30px; border-radius: 50%; background: rgba(255,255,255,0.35); }
+			.steer-base { position: absolute; width: 120px; height: 120px; margin: -60px 0 0 -60px; border-radius: 50%; background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2); display: none; }
+			.steer-knob { position: absolute; top: 50%; left: 50%; width: 54px; height: 54px; margin: -27px 0 0 -27px; border-radius: 50%; background: rgba(255,255,255,0.35); }
+			@media (max-width: 800px) {
+				.touch-controls { inset: 0 0 72px 0; }
+			}
 		`;
 		document.head.appendChild( css );
 

@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 
-const POOL_SIZE = 1280;
 const PARTICLES_PER_EMIT = 3;
 const EMIT_JITTER = 0.15;
 const BASE_SIZE = 1;
@@ -12,7 +11,9 @@ const _brPos = new THREE.Vector3();
 
 export class SmokeTrails {
 
-	constructor( scene ) {
+	constructor( scene, poolSize = 1280 ) {
+
+		const POOL_SIZE = poolSize;
 
 		const positions = new Float32Array( POOL_SIZE * 3 );
 		const opacities = new Float32Array( POOL_SIZE );
@@ -89,6 +90,7 @@ export class SmokeTrails {
 		}
 
 		this.emitIndex = 0;
+		this.POOL_SIZE = POOL_SIZE;
 
 	}
 
@@ -114,7 +116,7 @@ export class SmokeTrails {
 
 		const damping = 1 - dt;
 
-		for ( let i = 0; i < POOL_SIZE; i ++ ) {
+		for ( let i = 0; i < this.POOL_SIZE; i ++ ) {
 
 			const p = this.particles[ i ];
 			if ( p.life <= 0 ) continue;
@@ -158,7 +160,7 @@ export class SmokeTrails {
 	emitAt( x, y, z ) {
 
 		const i = this.emitIndex;
-		this.emitIndex = ( i + 1 ) % POOL_SIZE;
+		this.emitIndex = ( i + 1 ) % this.POOL_SIZE;
 
 		const p = this.particles[ i ];
 

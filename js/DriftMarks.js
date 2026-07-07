@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 
-const MAX_SEGMENTS = 4096;
 const VERTS_PER_SEGMENT = 6;
 const FLOATS_PER_SEGMENT = VERTS_PER_SEGMENT * 3;
 const COLOR_FLOATS_PER_SEGMENT = VERTS_PER_SEGMENT * 4;
@@ -28,13 +27,13 @@ const _replayCurr = new THREE.Vector3();
 
 class DriftTrail {
 
-	constructor( scene, material ) {
+	constructor( scene, material, maxSegments = 4096 ) {
 
-		const positions = new Float32Array( MAX_SEGMENTS * FLOATS_PER_SEGMENT );
-		const colors = new Float32Array( MAX_SEGMENTS * COLOR_FLOATS_PER_SEGMENT );
+		const positions = new Float32Array( maxSegments * FLOATS_PER_SEGMENT );
+		const colors = new Float32Array( maxSegments * COLOR_FLOATS_PER_SEGMENT );
 
 		// Pre-fill RGB to 1; only per-segment alpha is written at runtime.
-		for ( let i = 0; i < MAX_SEGMENTS * VERTS_PER_SEGMENT; i ++ ) {
+		for ( let i = 0; i < maxSegments * VERTS_PER_SEGMENT; i ++ ) {
 
 			const o = i * 4;
 			colors[ o ] = 1;
@@ -60,6 +59,7 @@ class DriftTrail {
 		this.mesh.renderOrder = - 1;
 		scene.add( this.mesh );
 
+		this.maxSegments = maxSegments;
 		this.positions = positions;
 		this.colors = colors;
 		this.geometry = geometry;
@@ -139,9 +139,9 @@ class DriftTrail {
 
 		}
 
-		this.segmentIndex = ( this.segmentIndex + 1 ) % MAX_SEGMENTS;
+		this.segmentIndex = ( this.segmentIndex + 1 ) % this.maxSegments;
 
-		if ( this.drawCount < MAX_SEGMENTS * VERTS_PER_SEGMENT ) {
+		if ( this.drawCount < this.maxSegments * VERTS_PER_SEGMENT ) {
 
 			this.drawCount += VERTS_PER_SEGMENT;
 			this.geometry.setDrawRange( 0, this.drawCount );
@@ -155,7 +155,7 @@ class DriftTrail {
 		const segCount = this.drawCount / VERTS_PER_SEGMENT;
 		if ( segCount === 0 ) return [];
 
-		const start = ( segCount < MAX_SEGMENTS ) ? 0 : this.segmentIndex;
+		const start = ( segCount < this.maxSegments ) ? 0 : this.segmentIndex;
 		const p = this.positions;
 		const c = this.colors;
 		const strokes = [];
@@ -165,7 +165,7 @@ class DriftTrail {
 
 		for ( let i = 0; i < segCount; i ++ ) {
 
-			const slot = ( start + i ) % MAX_SEGMENTS;
+			const slot = ( start + i ) % this.maxSegments;
 			const offset = slot * FLOATS_PER_SEGMENT;
 
 			// midpoint(pL, pR) === prev; midpoint(cL, cR) === curr
@@ -238,7 +238,7 @@ class DriftTrail {
 
 export class DriftMarks {
 
-	constructor( scene, trackId ) {
+	constructor( scene, trackId, maxSegments = 4096 ) {
 
 		const material = new THREE.MeshBasicMaterial( {
 			color: 0x111111,
@@ -253,8 +253,8 @@ export class DriftMarks {
 		} );
 
 		this.trails = [
-			new DriftTrail( scene, material ),
-			new DriftTrail( scene, material ),
+			new DriftTrail( scene, material, maxSegments ),
+			new DriftTrail( scene, material, maxSegments ),
 		];
 
 		this.storageKey = STORAGE_PREFIX + ( trackId || 'default' );

@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+	<title>Hakilidia-blockly</title>
+	<style>
+		:root {
+			--ui-pad: 12px;
+			--ui-radius: 22px;
+			--panel-max-height: calc( 100vh - 24px );
+		}
+		* { box-sizing: border-box; }
+		body {
+			margin: 0;
+			overflow: hidden;
+			background: #000;
+			font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+			padding: env( safe-area-inset-top ) env( safe-area-inset-right ) env( safe-area-inset-bottom ) env( safe-area-inset-left );
+		}
+		body.lite-mode {
+			background: #1a1d24;
+		}
+		body.lite-mode #reset-btn,
+		body.lite-mode .corner-link {
+			display: none;
+		}
+		#compat-banner {
+			margin: 0;
+			padding: 6px 10px;
+			font-size: 10px;
+			line-height: 1.35;
+			color: #5a3d12;
+			background: #fff3cd;
+			border-bottom: 1px solid rgba( 0, 0, 0, 0.08 );
+		}
+		canvas { display: block; touch-action: none; }
+		button, a {
+			font: inherit;
+		}
+		.corner-link,
+		.corner-btn {
+			color: #1f2430;
+			font: 500 12px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+			background: rgba(255,255,255,0.92);
+			padding: 10px 14px;
+			border-radius: 999px;
+			border: 1px solid rgba(0,0,0,0.06);
+			box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+			backdrop-filter: blur(12px);
+			-webkit-backdrop-filter: blur(12px);
+			z-index: 22;
+		}
+		.corner-link {
+			position: fixed;
+			top: calc( var( --ui-pad ) + env( safe-area-inset-top, 0px ) );
+			right: calc( var( --ui-pad ) + env( safe-area-inset-right, 0px ) );
+			text-decoration: none;
+		}
+		.corner-btn {
+			position: fixed;
+			bottom: calc( var( --ui-pad ) + env( safe-area-inset-bottom, 0px ) );
+			right: calc( var( --ui-pad ) + env( safe-area-inset-right, 0px ) );
+			cursor: pointer;
+			border: 1px solid rgba(0,0,0,0.06);
+		}
+		.corner-link:hover,
+		.corner-btn:hover {
+			background: #fff;
+		}
+		#blockly-panel {
+			position: fixed;
+			left: var( --ui-pad );
+			top: var( --ui-pad );
+			width: min( 430px, calc( 100vw - 2 * var( --ui-pad ) ) );
+			height: var( --panel-max-height );
+			display: flex;
+			flex-direction: column;
+			overflow: hidden;
+			background: rgba( 244, 246, 249, 0.94 );
+			border: 1px solid rgba( 0, 0, 0, 0.08 );
+			border-radius: var( --ui-radius );
+			box-shadow: 0 12px 34px rgba( 0, 0, 0, 0.24 );
+			backdrop-filter: blur( 12px );
+			-webkit-backdrop-filter: blur( 12px );
+			z-index: 21;
+			touch-action: none;
+		}
+		#blockly-panel.dragging {
+			box-shadow: 0 18px 42px rgba( 0, 0, 0, 0.32 );
+			cursor: grabbing;
+		}
+		#blockly-drag-handle {
+			display: flex;
+			align-items: center;
+			gap: 4px;
+			padding: 3px 6px;
+			border-bottom: 1px solid rgba( 0, 0, 0, 0.06 );
+			color: #4a5260;
+			font-size: 10px;
+			font-weight: 600;
+			letter-spacing: 0.01em;
+			cursor: grab;
+			user-select: none;
+			-webkit-user-select: none;
+			touch-action: none;
+			min-height: 28px;
+		}
+		#blockly-panel.dragging #blockly-drag-handle {
+			cursor: grabbing;
+		}
+		.blockly-drag-grip {
+			flex: 0 0 auto;
+			width: 12px;
+			height: 8px;
+			background:
+				radial-gradient( circle, #8a93a3 1px, transparent 1.1px ) 0 0 / 6px 4px;
+		}
+		.blockly-drag-title {
+			flex: 0 0 auto;
+			min-width: 0;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+		.panel-toggle {
+			flex: 0 0 auto;
+			border: 0;
+			border-radius: 999px;
+			width: 22px;
+			height: 22px;
+			padding: 0;
+			background: rgba( 31, 36, 48, 0.08 );
+			color: #1f2430;
+			cursor: pointer;
+			font-size: 10px;
+			line-height: 1;
+		}
+		.blockly-drag-hint {
+			display: none;
+		}
+		#blockly-toolbar {
+			display: flex;
+			flex-direction: column;
+			gap: 0;
+			padding: 4px 6px;
+			border-bottom: 1px solid rgba( 0, 0, 0, 0.08 );
+		}
+		.blockly-toolbar-actions {
+			display: grid;
+			grid-template-columns: repeat( 5, minmax( 0, 1fr ) );
+			gap: 3px;
+			width: 100%;
+		}
+		#blockly-toolbar button {
+			border: 0;
+			border-radius: 8px;
+			padding: 4px 2px;
+			min-height: 26px;
+			font-size: 10px;
+			color: #1f2430;
+			background: rgba( 31, 36, 48, 0.08 );
+			cursor: pointer;
+		}
+		#blockly-toolbar button:hover {
+			background: rgba( 31, 36, 48, 0.14 );
+		}
+		#blockly-toolbar button:disabled {
+			cursor: default;
+			opacity: 0.45;
+		}
+		#blockly-run {
+			background: #4caf6a !important;
+			color: #fff !important;
+		}
+		#blockly-stop {
+			background: #b3603a !important;
+			color: #fff !important;
+		}
+		#blockly-status {
+			flex: 1;
+			min-width: 0;
+			color: #4a5260;
+			font-size: 9px;
+			font-weight: 500;
+			line-height: 1.2;
+			text-align: right;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+		#blockly-panel.collapsed {
+			height: auto !important;
+			max-height: none;
+		}
+		#blockly-panel.collapsed #compat-banner,
+		#blockly-panel.collapsed #mission-panel,
+		#blockly-panel.collapsed #sparki-panel,
+		#blockly-panel.collapsed #blockly-toolbar,
+		#blockly-panel.collapsed #blockly-workspace {
+			display: none;
+		}
+		#blockly-panel.collapsed #blockly-status {
+			display: none;
+		}
+		#blockly-workspace {
+			min-height: 0;
+			flex: 1;
+		}
+		#loading {
+			position: fixed;
+			inset: 0;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			gap: 14px;
+			background: #adb2ba;
+			z-index: 30;
+			transition: opacity 0.35s ease, visibility 0.35s ease;
+		}
+		#loading.hidden {
+			opacity: 0;
+			visibility: hidden;
+			pointer-events: none;
+		}
+		#loading-label {
+			color: #1f2430;
+			font: 500 14px -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+		}
+		#loading-bar-track {
+			width: min( 280px, 70vw );
+			height: 4px;
+			border-radius: 999px;
+			background: rgba( 31, 36, 48, 0.12 );
+			overflow: hidden;
+		}
+		#loading-bar {
+			width: 0%;
+			height: 100%;
+			border-radius: inherit;
+			background: #1f2430;
+			transition: width 0.15s ease;
+		}
+		@media ( max-width: 800px ) {
+			:root {
+				--ui-pad: 6px;
+				--ui-radius: 16px;
+				--panel-max-height: min( 68vh, 520px );
+			}
+			.corner-link,
+			.corner-btn {
+				padding: 8px 10px;
+				font-size: 10px;
+			}
+			.corner-link {
+				top: calc( var( --ui-pad ) + env( safe-area-inset-top, 0px ) );
+				right: calc( var( --ui-pad ) + env( safe-area-inset-right, 0px ) );
+				max-width: calc( 50vw - 20px );
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+			}
+			.corner-btn {
+				bottom: calc( var( --ui-pad ) + env( safe-area-inset-bottom, 0px ) );
+				left: calc( var( --ui-pad ) + env( safe-area-inset-left, 0px ) );
+				right: auto;
+			}
+			#blockly-panel {
+				width: calc( 100vw - 2 * var( --ui-pad ) );
+				border-radius: 14px 14px 0 0;
+			}
+			#blockly-drag-handle {
+				padding: 2px 5px;
+				min-height: 24px;
+				gap: 3px;
+			}
+			.blockly-drag-title {
+				display: none;
+			}
+			.blockly-drag-hint {
+				display: none;
+			}
+			#blockly-status {
+				text-align: left;
+				font-size: 9px;
+			}
+			.blockly-toolbar-actions {
+				grid-template-columns: repeat( 5, minmax( 0, 1fr ) );
+				gap: 2px;
+			}
+			#blockly-toolbar {
+				padding: 3px 5px;
+			}
+			#blockly-toolbar button {
+				padding: 3px 1px;
+				min-height: 24px;
+				font-size: 9px;
+				border-radius: 6px;
+			}
+			#compat-banner {
+				padding: 3px 6px;
+				font-size: 9px;
+				line-height: 1.25;
+			}
+		}
+		@media ( max-width: 800px ) and ( orientation: landscape ) {
+			:root {
+				--panel-max-height: min( 82vh, 360px );
+			}
+		}
+	</style>
+	<link rel="preload" href="models/vehicle-truck-yellow.glb" as="fetch" crossorigin>
+	<link rel="preload" href="models/track-straight.glb" as="fetch" crossorigin>
+	<link rel="preload" href="models/track-corner.glb" as="fetch" crossorigin>
+	<link rel="preload" href="models/Textures/colormap.png" as="image">
+	<script type="importmap">
+	{
+		"imports": {
+			"three": "./vendor/three.module.js",
+			"three/addons/": "./vendor/three/addons/",
+			"crashcat": "./vendor/crashcat/index.js",
+			"mathcat": "./vendor/mathcat/index.js"
+		}
+	}
+	</script>
+</head>
+<body>
+	<div id="loading" aria-live="polite" aria-busy="true">
+		<div id="loading-bar-track"><div id="loading-bar"></div></div>
+		<div id="loading-label">Loading...</div>
+	</div>
+
+	<section id="blockly-panel" aria-label="Blockly controls">
+		<div id="blockly-drag-handle" aria-label="Deplacer le panneau Blockly">
+			<span class="blockly-drag-grip" aria-hidden="true"></span>
+			<span class="blockly-drag-title">Programme</span>
+			<span class="blockly-drag-hint">Glisser pour deplacer</span>
+			<div id="blockly-status" aria-live="polite">Chargement Blockly...</div>
+			<button id="blockly-panel-toggle" class="panel-toggle" type="button" aria-expanded="true" aria-label="Replier le panneau">▼</button>
+		</div>
+		<div id="blockly-toolbar">
+			<div class="blockly-toolbar-actions">
+				<button id="blockly-run" type="button">Lancer</button>
+				<button id="blockly-stop" type="button" disabled>Stop</button>
+				<button id="blockly-save" type="button">Sauv.</button>
+				<button id="blockly-restore" type="button">Rest.</button>
+				<button id="blockly-clear" type="button">Effacer</button>
+			</div>
+		</div>
+		<div id="blockly-workspace"></div>
+	</section>
+
+	<a class="corner-link" href="index.html">Mode manuel</a>
+	<button id="reset-btn" class="corner-btn" type="button">Reset</button>
+
+	<script>
+		window.RacingDeviceProfile = ( function () {
+
+			try {
+
+				if ( window.SparkiAndroid?.getDeviceProfileJson ) {
+
+					return JSON.parse( window.SparkiAndroid.getDeviceProfileJson() );
+
+				}
+
+			} catch ( error ) {
+
+				console.warn( 'Device profile unavailable', error );
+
+			}
+
+			return null;
+
+		} )();
+
+		window.RacingVirtualControls = {
+			update() {},
+			getInput() {
+				return { x: 0, z: 0, touchActive: false, blocklyActive: false };
+			},
+			stop() {},
+		};
+	</script>
+	<script type="module" src="js/blockly/bootstrap.js"></script>
+	<script src="node_modules/blockly/blockly_compressed.js" defer></script>
+	<script src="node_modules/blockly/blocks_compressed.js" defer></script>
+	<script src="node_modules/blockly/msg/fr.js" defer></script>
+	<script type="module" src="js/blockly/BlocklyPanel.js"></script>
+</body>
+</html>

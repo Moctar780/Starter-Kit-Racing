@@ -1,0 +1,30 @@
+{
+  "name": "starter-kit-racing",
+  "version": "1.0.0",
+  "description": "A JavaScript/Three.js port of [Kenney's Starter Kit Racing](https://github.com/KenneyNL/Starter-Kit-Racing).",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "android:assemble": "cd android && ./gradlew assembleDebug",
+    "android:assemble:release": "cd android && ./gradlew assembleRelease",
+    "android:install": "cd android && ./gradlew installDebug",
+    "android:install:release": "cd android && ./gradlew installRelease"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mrdoob/Starter-Kit-Racing.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/mrdoob/Starter-Kit-Racing/issues"
+  },
+  "homepage": "https://github.com/mrdoob/Starter-Kit-Racing#readme",
+  "dependencies": {
+    "blockly": "^13.1.0",
+    "crashcat": "^0.0.3",
+    "three": "^0.185.1"
+  }
+}
