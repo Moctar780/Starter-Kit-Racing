@@ -1,0 +1,77 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - version_2
+      - main
+      - master
+  pull_request:
+    branches:
+      - version_2
+      - main
+      - master
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify deployment files
+        shell: bash
+        run: |
+          test -f index.html
+          test -f blockly.html
+          test -f editor.html
+          test -f js/main.js
+          test -f vendor/three.module.js
+          test -d node_modules/blockly
+
+      - name: Docker build (Sliplane)
+        if: matrix.os == 'ubuntu-latest'
+        run: docker build -t starter-kit-racing:ci .
+
+      - name: Create Windows offline package
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          $items = @(
+            'index.html',
+            'blockly.html',
+            'editor.html',
+            'js',
+            'vendor',
+            'models',
+            'audio',
+            'sprites',
+            'node_modules',
+            'package.json',
+            'package-lock.json',
+            'scripts/start-windows.bat'
+          )
+          Compress-Archive -Path $items -DestinationPath starter-kit-racing-windows.zip -Force
+
+      - name: Upload Windows package
+        if: matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: starter-kit-racing-windows
+          path: starter-kit-racing-windows.zip
+          retention-days: 14
